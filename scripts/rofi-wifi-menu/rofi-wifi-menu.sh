@@ -52,7 +52,10 @@ fi
 
 
 
-CHENTRY=$(echo -e "$TOGGLE\nmanual\n$LIST" | uniq -u | rofi -dmenu -p "Wi-Fi SSID: " -lines "$LINENUM" -a "$HIGHLINE" -location "$POSITION" -yoffset "$YOFF" -xoffset "$XOFF" -font "$FONT" -width -"$RWIDTH")
+CHENTRY=$(echo -e "$TOGGLE\nmanual\n$LIST" | uniq -u | rofi -dmenu -p "Wi-Fi SSID: " \
+ -lines "$LINENUM" -a "$HIGHLINE" -location "$POSITION" -yoffset "$YOFF" -xoffset "$XOFF" \
+ -font "$FONT" -width -"$RWIDTH" \
+ -theme-str 'window {background-color: #1a1b26;} listview {background-color: #1a1b26; spacing: 0px; padding: 0px;} element {padding: 4px;} element normal.normal {background-color: #1a1b26; text-color: #c0caf5;} element alternate.normal {background-color: #1a1b26; text-color: #c0caf5;} element selected.normal {background-color: #414868; text-color: #7aa2f7;} element normal.active {background-color: #24283b; text-color: #7aa2f7;} element alternate.active {background-color: #00ff99; text-color: #7aa2f7;} element selected.active {background-color: #414868; text-color: #7aa2f7;} entry {background-color: #1a1b26; text-color: #c0caf5;} inputbar {background-color: #1a1b26;} prompt {background-color: #1a1b26; text-color: #c0caf5;}')
 #echo "$CHENTRY"
 CHSSID=$(echo "$CHENTRY" | sed  's/\s\{2,\}/\|/g' | awk -F "|" '{print $1}')
 #echo "$CHSSID"
