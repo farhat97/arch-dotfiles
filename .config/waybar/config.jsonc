@@ -2,8 +2,6 @@
 {
     "layer": "top", // Waybar at top layer
     "position": "top", // Waybar position (top|bottom|left|right)
-    // "height": 22, // Waybar height (to be removed for auto height)
-    // "width": 1280, // Waybar width
     "spacing": 1, // Gaps between modules (4px)
     // "output": "DP-1", TODO: set up script to show waybar on second monitor only
     // Choose the order of the modules
@@ -18,9 +16,12 @@
         // "idle_inhibitor", // -- to inhibit the idle behavior such as screen blanking, locking
         "pulseaudio",
         "network",
-        "cpu",
-        "memory",
-        "temperature",
+        
+        "group/hardware",
+        // "cpu",
+        // "memory",
+        // "temperature",
+        
         // "hyprland/language",
         "backlight",
         "battery",

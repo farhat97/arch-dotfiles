@@ -16,6 +16,17 @@
             "default": ""
         }
     },
+
+    "hyprland/window": {
+        "max-length": 35,
+        "rewrite": {
+            "(.*) — Mozilla Firefox": "Firefox",
+            "(.*) — Google Chrome": "Chrome",
+            "^$": "Desktop"
+        }
+        // "separate-outputs": true
+    },
+
     //"idle_inhibitor": {
         //"format": "{icon}",
         //"format-icons": {
@@ -42,14 +53,26 @@
         "on-click": "pavucontrol"
     },
     "network": {
-        "format-wifi": "   {essid} ({signalStrength}%)",
-        "format-ethernet": "{ipaddr}/{cidr} ",
-        "tooltip-format": "{ifname} via {gwaddr} ",
+        "format-wifi": " ",
+        "format-ethernet": "{ipaddr}/{cidr} ",
+        "tooltip-format": "{essid} ({signalStrength}%)",
         "format-linked": "{ifname} (No IP) ",
         "format-disconnected": "Disconnected ⚠",
         "on-click": "sh ~/scripts/rofi-wifi-menu/rofi-wifi-menu.sh"
     },
-    // TODO: wondering if I can put both cpu and memory under one tray on click
+    "group/hardware": {
+        "orientation": "horizontal",
+        "drawer": {
+            "transition-duration": 400,
+            "children-class": "hardware-child",
+            "transition-left-to-right": true
+        },
+        "modules": [
+            "cpu",
+            "memory",
+            "temperature"
+        ]
+    },
     "cpu": {
         "format": "  {usage}%",
         "tooltip": true
@@ -58,13 +81,13 @@
         "format": "  {}%",
 	"tooltip": true
     },
-    // "temperature": {
-    //     "interval": 10,
-    //     "hwmon-path": "/sys/devices/platform/coretemp.0/hwmon/hwmon4/temp1_input",
-    //     "critical-threshold": 100,
-    //     "format-critical": " {temperatureC}",
-    //     "format": " {temperatureC}°C"
-    // },
+    "temperature": {
+        "interval": 10,
+        "hwmon-path": "/sys/devices/platform/coretemp.0/hwmon/hwmon4/temp1_input",
+        "critical-threshold": 100,
+        "format-critical": " {temperatureC}",
+        "format": " {temperatureC}°C"
+    },
     // "hyprland/language": {
     //   "format": "  {}",
     //   "format-en": "EN",
@@ -88,8 +111,7 @@
         "format-icons": ["", "", "", "", ""]
     },
     "clock": {
-        // "format": "{:%H:%M | %e %B} ",<-- default: 24h
-	"format": "{:%I:%M %p | %e %B}",
+        "format": "{:%I:%M %p | %e %B}",
         "tooltip-format": "<big>{:%Y %B}</big>\n<tt><small>{calendar}</small></tt>",
         "format-alt": "{:%Y-%m-%d}"
     }
