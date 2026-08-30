@@ -18,7 +18,7 @@ hl.monitor({
 })
 
 hl.monitor({
-    output   = "DP-1",
+    output   = "DP-6",
     mode     = "1920x1080@144",
     position = "0x0",
     scale    = 1,
@@ -30,6 +30,26 @@ hl.monitor({
     position = "210x1080",
     scale    = 1.33,
 })
+
+-- Disable laptop display when lid is closed
+hl.bind("switch:on:Lid Switch", function()
+    hl.monitor({
+        output = "eDP-1",
+        disabled = true,
+    })
+end, { locked = true })
+
+-- Re-enable laptop display when lid is opened
+hl.bind("switch:off:Lid Switch", function()
+    hl.monitor({
+        output = "eDP-1",
+        disabled = false,
+        mode = "preferred",
+        position = "auto",
+        scale = 1,
+    })
+end, { locked = true })
+
 
 --##################
 
