@@ -28,7 +28,7 @@ hl.monitor({
     output   = "eDP-1",
     mode     = "1920x1200@60",
     position = "210x1080",
-    scale    = 1.33,
+    scale    = 1.25,
 })
 
 -- Disable laptop display when lid is closed
@@ -462,6 +462,17 @@ hl.window_rule({
         pin = "^$",
     },
     -- TODO: review rule: "no_focus 1"
+})
+
+hl.window_rule({
+    match = { class = "org.pulseaudio.pavucontrol" },
+    float = true,
+    size = "1000 600"
+})
+hl.window_rule({
+    match = { class = "blueman-manager" },
+    float = true,
+    size = "1000 600"
 })
 
 -- Autostart
