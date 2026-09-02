@@ -10,7 +10,8 @@
         "hyprland/workspaces"
     ],
     "modules-center": [
-        "hyprland/window"
+        "hyprland/window",
+        "custom/spotify"
     ],
     "modules-right": [
         // "idle_inhibitor", // -- to inhibit the idle behavior such as screen blanking, locking
@@ -26,6 +27,9 @@
         "backlight",
         "battery",
         "clock"
+
+        // TODO: need to work on this module
+        // "custom/notification"
     ],
     //Modules configuration
 

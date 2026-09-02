@@ -102,11 +102,18 @@ window#waybar {
     font-size: 25px;
     transition: color .5s;
 }
+
 #custom-arch:hover {
     color: #1793d1;
 }
+
 #hardware {
     background-color:rgba(23, 147, 209, 0.133); 
     border-radius: 10px;
     margin: 1px 0 1px 0;
 }
+
+/* #custom-notification {
+  font-family: "NotoSansMono Nerd Font";
+  padding: 3px;
+} */

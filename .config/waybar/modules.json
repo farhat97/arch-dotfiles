@@ -18,14 +18,21 @@
     },
 
     "hyprland/window": {
-        "max-length": 35,
+        "max-length": 25,
         "rewrite": {
             "(.*) — Mozilla Firefox": "Firefox",
             "(.*) — Google Chrome": "Chrome",
             "^$": "Desktop"
         }
-        // "separate-outputs": true
     },
+
+    // TODO: need to fix
+    // "custom/spotify": {
+    //     "format": "{} ",
+    //     "exec": "/usr/bin/python3 ~/.config/waybar/mediaplayer.py --player spotify",
+    //     "return-type": "json",
+    //     "on-click": "playerctl -p spotify play-pause"
+    // },
 
     //"idle_inhibitor": {
         //"format": "{icon}",
@@ -116,4 +123,25 @@
         "format-alt": "{:%Y-%m-%d}"
     }
 
+    // TODO: need to work on this module
+    // "custom/notification": {
+    //     "tooltip": true,
+    //     "format": "<span size='15pt'>{icon}</span>",
+    //     "format-icons": {
+    //         "notification": "󱅫",
+    //         "none": "󰂜",
+    //         "dnd-notification": "󰂠",
+    //         "dnd-none": "󰪓",
+    //         "inhibited-notification": "󰂛",
+    //         "inhibited-none": "󰪑",
+    //         "dnd-inhibited-notification": "󰂛",
+    //         "dnd-inhibited-none": "󰪑"
+    //     },
+    //     "return-type": "json",
+    //     "exec-if": "which swaync-client",
+    //     "exec": "swaync-client -swb",
+    //     "on-click": "swaync-client -t -sw",
+    //     "on-click-right": "swaync-client -d -sw",
+    //     "escape": true
+    // }
 }
