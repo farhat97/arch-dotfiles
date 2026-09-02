@@ -46,7 +46,6 @@ hl.bind("switch:off:Lid Switch", function()
         disabled = false,
         mode = "preferred",
         position = "auto",
-        scale = 1,
     })
 end, { locked = true })
 
