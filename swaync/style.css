@@ -1,7 +1,7 @@
-@define-color cc-bg #33ccff3a;
+@define-color cc-bg #07171c95;
 @define-color noti-border-color #dcd7ba;
 @define-color noti-bg #11111b;
-@define-color noti-bg-greener #00ff992f;
+@define-color noti-bg-darker #081b21d1;
 @define-color noti-bg-hover #1b1b2b;
 @define-color noti-bg-focus #1b1b1b;
 @define-color noti-close-bg #dcd7ba;
@@ -21,13 +21,13 @@
 }
 
 .test-class {
-  color: #00ff992f;
+  color: #07171c95;
 }
 
 .control-center .notification-row:focus,
 .control-center .notification-row:hover {
   opacity: 1;
-  background: @noti-bg-greener;
+  background: @noti-bg-darker;
 }
 
 .notification-row {
@@ -99,7 +99,7 @@
 }
 
 .inline-reply-entry {
-  background: @noti-bg-greener;
+  background: @noti-bg-darker;
   color: @text-color;
   caret-color: @text-color;
   border: 1px solid @noti-border-color;
@@ -156,7 +156,7 @@
 
 .widget-title {
   color: @blue-base;
-  /* background: @noti-bg-greener; */
+  background: @noti-bg-darker;
   padding: 5px 10px;
   margin: 10px;
   font-size: 1.5rem;
@@ -175,7 +175,7 @@
 }
 
 .widget-dnd {
-  background: @noti-bg-greener;
+  background: @noti-bg-darker;
   padding: 5px 10px;
   margin: 5px 10px;
   font-size: large;
@@ -202,7 +202,7 @@
   font-size: x-large;
   padding: 5px;
   margin: 0px 10px 10px 10px;
-  /* background: @noti-bg-greener; */
+  background: @noti-bg-darker;
 }
 
 .widget-buttons-grid>flowbox>flowboxchild>button {
@@ -225,7 +225,7 @@
 
 .widget-volume,
 .widget-backlight {
-  background: @noti-bg-greener;
+  background: @noti-bg-darker;
   padding: 5px;
   margin: 5px 10px;
   font-size: 2rem;
@@ -234,7 +234,7 @@
 
 .widget-mpris {
   color: @text-color;
-  background: @noti-bg-greener;
+  background: @noti-bg-darker;
   margin: 0px 10px 10px 10px;
   box-shadow: none;
 }
