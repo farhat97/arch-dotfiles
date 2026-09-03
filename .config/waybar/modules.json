@@ -16,6 +16,24 @@
             "default": ""
         }
     },
+
+    "hyprland/window": {
+        "max-length": 25,
+        "rewrite": {
+            "(.*) — Mozilla Firefox": "Firefox",
+            "(.*) — Google Chrome": "Chrome",
+            "^$": "Desktop"
+        }
+    },
+
+    // TODO: need to fix
+    // "custom/spotify": {
+    //     "format": "{} ",
+    //     "exec": "/usr/bin/python3 ~/.config/waybar/mediaplayer.py --player spotify",
+    //     "return-type": "json",
+    //     "on-click": "playerctl -p spotify play-pause"
+    // },
+
     //"idle_inhibitor": {
         //"format": "{icon}",
         //"format-icons": {
@@ -42,12 +60,25 @@
         "on-click": "pavucontrol"
     },
     "network": {
-        "format-wifi": "   {essid} ({signalStrength}%)",
-        "format-ethernet": "{ipaddr}/{cidr} ",
-        "tooltip-format": "{ifname} via {gwaddr} ",
+        "format-wifi": " ",
+        "format-ethernet": "{ipaddr}/{cidr} ",
+        "tooltip-format": "{essid} ({signalStrength}%)",
         "format-linked": "{ifname} (No IP) ",
         "format-disconnected": "Disconnected ⚠",
         "on-click": "sh ~/scripts/rofi-wifi-menu/rofi-wifi-menu.sh"
+    },
+    "group/hardware": {
+        "orientation": "horizontal",
+        "drawer": {
+            "transition-duration": 400,
+            "children-class": "hardware-child",
+            "transition-left-to-right": true
+        },
+        "modules": [
+            "cpu",
+            "memory",
+            "temperature"
+        ]
     },
     "cpu": {
         "format": "  {usage}%",
@@ -86,23 +117,31 @@
         "format-alt": "{time}  {icon}",
         "format-icons": ["", "", "", "", ""]
     },
-    "battery#bat2": {
-        "bat": "BAT2",
-        "states": {
-            "warning": 30,
-            "critical": 15
-        },
-        "format": "{icon}  {capacity}%",
-        "format-full": "{icon}  {capacity}%",
-        "format-charging": "  {capacity}%",
-        "format-plugged": "  {capacity}%",
-        "format-icons": ["", "", "", "", ""]
-    },
     "clock": {
-        // "format": "{:%H:%M | %e %B} ",<-- default: 24h
-	"format": "{:%I:%M %p | %e %B}",
+        "format": "{:%I:%M %p | %e %B}",
         "tooltip-format": "<big>{:%Y %B}</big>\n<tt><small>{calendar}</small></tt>",
         "format-alt": "{:%Y-%m-%d}"
     }
 
+    // TODO: need to work on this module
+    // "custom/notification": {
+    //     "tooltip": true,
+    //     "format": "<span size='15pt'>{icon}</span>",
+    //     "format-icons": {
+    //         "notification": "󱅫",
+    //         "none": "󰂜",
+    //         "dnd-notification": "󰂠",
+    //         "dnd-none": "󰪓",
+    //         "inhibited-notification": "󰂛",
+    //         "inhibited-none": "󰪑",
+    //         "dnd-inhibited-notification": "󰂛",
+    //         "dnd-inhibited-none": "󰪑"
+    //     },
+    //     "return-type": "json",
+    //     "exec-if": "which swaync-client",
+    //     "exec": "swaync-client -swb",
+    //     "on-click": "swaync-client -t -sw",
+    //     "on-click-right": "swaync-client -d -sw",
+    //     "escape": true
+    // }
 }
