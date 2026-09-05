@@ -78,7 +78,6 @@ local menu = "fuzzel"
 
 -- exec-once = nm-applet &
 
-
 --############################
 
 --## ENVIRONMENT VARIABLES ###
@@ -269,7 +268,8 @@ hl.config({
 
 hl.config({
     input = {
-        kb_layout = "us",
+        kb_layout = "us, es",
+        kb_options = "grp:alt_shift_toggle",
         follow_mouse = 1,
         sensitivity = 0,
         -- -1.0 - 1.0, 0 means no modification.
@@ -326,6 +326,8 @@ hl.bind(mainMod .. " + " .. "Q", hl.dsp.exec_cmd("kitty"))
 hl.bind(mainMod .. " + " .. "W", hl.dsp.window.close())
 
 hl.bind(mainMod .. " + " .. "M", hl.dsp.exit())
+
+hl.bind(mainMod .. " + " .. "N", hl.dsp.exec_cmd("swaync-client -t -sw"))
 
 hl.bind(mainMod .. " + " .. "E", hl.dsp.exec_cmd("dolphin"))
 
@@ -473,10 +475,17 @@ hl.window_rule({
     float = true,
     size = "1000 600"
 })
+hl.window_rule({
+    match = { class = "org.kde.dolphin" },
+    float = true,
+    size = "900 550"
+})
+
 
 -- Autostart
 hl.on("hyprland.start", function()
     hl.exec_cmd("waybar & hyprpaper")
     hl.exec_cmd("gsettings set org.gnome.desktop.interface color-scheme \"prefer-dark\"")
     hl.exec_cmd("gsettings set org.gnome.desktop.interface gtk-theme \"adw-gtk3\"")
+    hl.exec_cmd("swaync")
 end)
