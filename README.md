@@ -12,3 +12,7 @@
 - btop
 - flameshot
 
+## Qt6 settings for Breeze Dark color scheme
+- Add the following line under /etc/environment : 
+`QT_QPA_PLATFORMTHEME=qt5ct`
+
