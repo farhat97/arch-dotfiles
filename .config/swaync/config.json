@@ -24,8 +24,8 @@
   "text-empty": "Nothing to show",
   "scripts": {
     "sound-script": {
-    //   "exec": "paplay ~/.config/swaync/notification.ogg",
-    //   "app-name": ".*"
+      "exec": "paplay ~/.config/swaync/notification.ogg",
+      "app-name": ".*"
     }
   },
   "widgets": ["title", "buttons-grid", "mpris"],
