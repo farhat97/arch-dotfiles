@@ -31,12 +31,9 @@ hl.monitor({
     scale    = 1.25,
 })
 
--- Disable laptop display when lid is closed
+-- Lock, then suspend-then-hibernate when lid closes
 hl.bind("switch:on:Lid Switch", function()
-    hl.monitor({
-        output = "eDP-1",
-        disabled = true,
-    })
+    hl.exec_cmd("hyprlock & sleep 3 && systemctl suspend-then-hibernate")
 end, { locked = true })
 
 -- Re-enable laptop display when lid is opened
