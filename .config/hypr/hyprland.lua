@@ -31,20 +31,54 @@ hl.monitor({
     scale    = 1.25,
 })
 
--- Lock, then suspend-then-hibernate when lid closes
+local INTERNAL = "eDP-1"
+local lid_closed = false
+
+local function move_ws1_to_external()
+    if lid_closed then
+        hl.dispatch(hl.dsp.workspace.move({ workspace = 1, monitor = hl.get_active_monitor() }))
+    end
+end
+
+hl.on("monitor.removed", move_ws1_to_external)
+
+-- Counts connected external outputs via sysfs (no hyprctl, so no socket deadlock)
+local function is_docked()
+    local p = io.popen("grep -l '^connected' /sys/class/drm/card*-DP-*/status /sys/class/drm/card*-HDMI-*/status 2>/dev/null | wc -l")
+    if not p then return false end
+    local count = tonumber(p:read("*a")) or 0
+    p:close()
+    return count > 0
+end
+
+local function disable_internal_if_closed()
+    if lid_closed then
+        hl.monitor({ output = INTERNAL, disabled = true })
+    end
+end
+
 hl.bind("switch:on:Lid Switch", function()
-    hl.exec_cmd("hyprlock & sleep 3 && systemctl suspend-then-hibernate")
+    if is_docked() then
+        lid_closed = true
+        hl.monitor({ output = INTERNAL, disabled = true })
+    else
+        hl.exec_cmd(os.getenv("HOME") .. "/.config/hypr/lid-close.sh")
+    end
 end, { locked = true })
 
--- Re-enable laptop display when lid is opened
 hl.bind("switch:off:Lid Switch", function()
+    lid_closed = false
     hl.monitor({
-        output = "eDP-1",
+        output   = INTERNAL,
         disabled = false,
-        mode = "preferred",
-        position = "auto",
+        mode     = "1920x1200@60",
+        position = "210x1080",
+        scale    = 1.25,
     })
 end, { locked = true })
+
+-- Re-apply if the dock re-enumerates while the lid is closed
+hl.on("monitor.added", disable_internal_if_closed)
 
 
 --##################
