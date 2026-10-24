@@ -31,36 +31,88 @@ hl.monitor({
     scale    = 1.25,
 })
 
+-- Clamshell: when docked + lid closed, disable eDP-1 and park all workspaces on the external
 local INTERNAL = "eDP-1"
+local EXTERNAL = "DP-6"
 local lid_closed = false
+local applying_clamshell = false
 
-local function move_ws1_to_external()
-    if lid_closed then
-        hl.dispatch(hl.dsp.workspace.move({ workspace = 1, monitor = hl.get_active_monitor() }))
+local function internal_is_active()
+    return hl.get_monitor(INTERNAL) ~= nil
+end
+
+local function get_external_name()
+    for _, mon in ipairs(hl.get_monitors()) do
+        if mon.name ~= INTERNAL then
+            return mon.name
+        end
+    end
+    return nil
+end
+
+local function is_docked()
+    return get_external_name() ~= nil
+end
+
+-- Move any workspace that isn't already on the external (including empty ones).
+local function migrate_workspaces(target)
+    if not target then
+        return
+    end
+    for _, ws in ipairs(hl.get_workspaces()) do
+        if not ws.special then
+            local mon = ws.monitor
+            if not mon or mon.name ~= target then
+                hl.dispatch(hl.dsp.workspace.move({ workspace = ws.id, monitor = target }))
+            end
+        end
     end
 end
 
-hl.on("monitor.removed", move_ws1_to_external)
-
--- Counts connected external outputs via sysfs (no hyprctl, so no socket deadlock)
-local function is_docked()
-    local p = io.popen("grep -l '^connected' /sys/class/drm/card*-DP-*/status /sys/class/drm/card*-HDMI-*/status 2>/dev/null | wc -l")
-    if not p then return false end
-    local count = tonumber(p:read("*a")) or 0
-    p:close()
-    return count > 0
+local function disable_internal()
+    hl.monitor({ output = INTERNAL, disabled = true })
 end
 
-local function disable_internal_if_closed()
-    if lid_closed then
-        hl.monitor({ output = INTERNAL, disabled = true })
+-- Disable first, then sweep stragglers. Migrating *before* disable empties eDP-1
+-- and Hyprland immediately spawns a new empty workspace on it (the leftover
+-- "workspace at the end" stuck on the laptop panel).
+local function apply_clamshell(schedule_retries)
+    if applying_clamshell then
+        return
+    end
+    applying_clamshell = true
+
+    local external = get_external_name() or EXTERNAL
+
+    if internal_is_active() then
+        disable_internal()
+    end
+
+    migrate_workspaces(external)
+    hl.dispatch(hl.dsp.focus({ monitor = external }))
+
+    applying_clamshell = false
+
+    if schedule_retries then
+        for _, delay in ipairs({ 250, 750, 1500 }) do
+            hl.timer(function()
+                if not lid_closed then
+                    return
+                end
+                if is_docked() and internal_is_active() then
+                    apply_clamshell(false)
+                else
+                    migrate_workspaces(get_external_name() or EXTERNAL)
+                end
+            end, { timeout = delay, type = "oneshot" })
+        end
     end
 end
 
 hl.bind("switch:on:Lid Switch", function()
     if is_docked() then
         lid_closed = true
-        hl.monitor({ output = INTERNAL, disabled = true })
+        apply_clamshell(true)
     else
         hl.exec_cmd(os.getenv("HOME") .. "/.config/hypr/lid-close.sh")
     end
@@ -77,8 +129,21 @@ hl.bind("switch:off:Lid Switch", function()
     })
 end, { locked = true })
 
--- Re-apply if the dock re-enumerates while the lid is closed
-hl.on("monitor.added", disable_internal_if_closed)
+-- If eDP-1 comes back while the lid is still closed, disable it again
+hl.on("monitor.added", function()
+    if lid_closed and is_docked() and internal_is_active() then
+        apply_clamshell(false)
+    end
+end)
+
+hl.on("monitor.removed", function()
+    if lid_closed then
+        local target = get_external_name()
+        if target then
+            migrate_workspaces(target)
+        end
+    end
+end)
 
 
 --##################
