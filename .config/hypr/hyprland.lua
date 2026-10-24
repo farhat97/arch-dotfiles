@@ -34,9 +34,13 @@ hl.monitor({
 -- Clamshell: when docked + lid closed, disable eDP-1 and park all workspaces on the external
 local INTERNAL = "eDP-1"
 local EXTERNAL = "DP-6"
+local INTERNAL_MODE = "1920x1200@60"
+local INTERNAL_POS = "210x1080"
+local INTERNAL_SCALE = 1.25
 local lid_closed = false
 local applying_clamshell = false
 
+-- get_monitor returns nil for a successfully disabled output
 local function internal_is_active()
     return hl.get_monitor(INTERNAL) ~= nil
 end
@@ -54,7 +58,17 @@ local function is_docked()
     return get_external_name() ~= nil
 end
 
--- Move any workspace that isn't already on the external (including empty ones).
+-- Prefer ACPI over the switch event (lid switches often bounce open/close).
+local function acpi_lid_closed()
+    local f = io.open("/proc/acpi/button/lid/LID/state", "r")
+    if not f then
+        return nil
+    end
+    local content = f:read("*a") or ""
+    f:close()
+    return content:find("closed", 1, true) ~= nil
+end
+
 local function migrate_workspaces(target)
     if not target then
         return
@@ -69,13 +83,30 @@ local function migrate_workspaces(target)
     end
 end
 
+-- IMPORTANT: after an enabled rule with mode/pos/scale (the static eDP-1 block
+-- above, or lid-open), `hl.monitor({ disabled = true })` alone can be a no-op.
+-- Always respecify the full rule with disabled = true.
 local function disable_internal()
-    hl.monitor({ output = INTERNAL, disabled = true })
+    hl.monitor({
+        output   = INTERNAL,
+        mode     = INTERNAL_MODE,
+        position = INTERNAL_POS,
+        scale    = INTERNAL_SCALE,
+        disabled = true,
+    })
 end
 
--- Disable first, then sweep stragglers. Migrating *before* disable empties eDP-1
--- and Hyprland immediately spawns a new empty workspace on it (the leftover
--- "workspace at the end" stuck on the laptop panel).
+local function enable_internal()
+    hl.monitor({
+        output   = INTERNAL,
+        mode     = INTERNAL_MODE,
+        position = INTERNAL_POS,
+        scale    = INTERNAL_SCALE,
+        disabled = false,
+    })
+end
+
+-- Disable first (must succeed or Hyprland will keep a workspace on eDP-1).
 local function apply_clamshell(schedule_retries)
     if applying_clamshell then
         return
@@ -83,20 +114,21 @@ local function apply_clamshell(schedule_retries)
     applying_clamshell = true
 
     local external = get_external_name() or EXTERNAL
-
-    if internal_is_active() then
-        disable_internal()
-    end
-
+    disable_internal()
     migrate_workspaces(external)
     hl.dispatch(hl.dsp.focus({ monitor = external }))
 
     applying_clamshell = false
 
     if schedule_retries then
-        for _, delay in ipairs({ 250, 750, 1500 }) do
+        for _, delay in ipairs({ 100, 400, 1000, 2000 }) do
             hl.timer(function()
                 if not lid_closed then
+                    return
+                end
+                -- Bail if ACPI says the lid was opened
+                if acpi_lid_closed() == false then
+                    lid_closed = false
                     return
                 end
                 if is_docked() and internal_is_active() then
@@ -110,8 +142,8 @@ local function apply_clamshell(schedule_retries)
 end
 
 hl.bind("switch:on:Lid Switch", function()
+    lid_closed = true
     if is_docked() then
-        lid_closed = true
         apply_clamshell(true)
     else
         hl.exec_cmd(os.getenv("HOME") .. "/.config/hypr/lid-close.sh")
@@ -119,17 +151,20 @@ hl.bind("switch:on:Lid Switch", function()
 end, { locked = true })
 
 hl.bind("switch:off:Lid Switch", function()
-    lid_closed = false
-    hl.monitor({
-        output   = INTERNAL,
-        disabled = false,
-        mode     = "1920x1200@60",
-        position = "210x1080",
-        scale    = 1.25,
-    })
+    -- Debounce spurious "open" events while the lid is still physically closed
+    hl.timer(function()
+        if acpi_lid_closed() then
+            lid_closed = true
+            if is_docked() then
+                apply_clamshell(true)
+            end
+            return
+        end
+        lid_closed = false
+        enable_internal()
+    end, { timeout = 300, type = "oneshot" })
 end, { locked = true })
 
--- If eDP-1 comes back while the lid is still closed, disable it again
 hl.on("monitor.added", function()
     if lid_closed and is_docked() and internal_is_active() then
         apply_clamshell(false)
@@ -144,6 +179,17 @@ hl.on("monitor.removed", function()
         end
     end
 end)
+
+-- Config reload resets lid_closed; re-sync from ACPI so a closed lid stays clamshell
+local function sync_clamshell_from_acpi()
+    if acpi_lid_closed() and is_docked() then
+        lid_closed = true
+        apply_clamshell(true)
+    end
+end
+
+hl.on("hyprland.start", sync_clamshell_from_acpi)
+hl.on("config.reloaded", sync_clamshell_from_acpi)
 
 
 --##################
