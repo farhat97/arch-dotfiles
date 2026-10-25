@@ -559,19 +559,21 @@ hl.bind(mainMod .. " + " .. "mouse:272", hl.dsp.window.drag(), { mouse = true })
 
 hl.bind(mainMod .. " + " .. "mouse:273", hl.dsp.window.resize(), { mouse = true })
 
--- Laptop multimedia keys for volume and LCD brightness
+-- Laptop multimedia keys for volume and LCD brightness.
+-- swayosd-client changes the level and draws the OSD. Shown on the focused monitor.
+local osd = 'swayosd-client --monitor "$(hyprctl monitors -j | jq -r \'.[] | select(.focused == true).name\')"'
 
-hl.bind("XF86AudioRaiseVolume", hl.dsp.exec_cmd("wpctl set-volume -l 1 @DEFAULT_AUDIO_SINK@ 5%+"), { locked = true })
+hl.bind("XF86AudioRaiseVolume", hl.dsp.exec_cmd(osd .. " --output-volume +5 --max-volume 100"), { locked = true })
 
-hl.bind("XF86AudioLowerVolume", hl.dsp.exec_cmd("wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-"), { locked = true })
+hl.bind("XF86AudioLowerVolume", hl.dsp.exec_cmd(osd .. " --output-volume -5 --max-volume 100"), { locked = true })
 
-hl.bind("XF86AudioMute", hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"), { locked = true })
+hl.bind("XF86AudioMute", hl.dsp.exec_cmd(osd .. " --output-volume mute-toggle"), { locked = true })
 
-hl.bind("XF86AudioMicMute", hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle"), { locked = true })
+hl.bind("XF86AudioMicMute", hl.dsp.exec_cmd(osd .. " --input-volume mute-toggle"), { locked = true })
 
-hl.bind("XF86MonBrightnessUp", hl.dsp.exec_cmd("brightnessctl -e4 -n2 set 5%+"), { locked = true })
+hl.bind("XF86MonBrightnessUp", hl.dsp.exec_cmd(osd .. " --brightness +5 --min-brightness 2 --device intel_backlight"), { locked = true })
 
-hl.bind("XF86MonBrightnessDown", hl.dsp.exec_cmd("brightnessctl -e4 -n2 set 5%-"), { locked = true })
+hl.bind("XF86MonBrightnessDown", hl.dsp.exec_cmd(osd .. " --brightness -5 --min-brightness 2 --device intel_backlight"), { locked = true })
 
 -- Requires playerctl
 
@@ -630,4 +632,5 @@ hl.on("hyprland.start", function()
     hl.exec_cmd("gsettings set org.gnome.desktop.interface color-scheme \"prefer-dark\"")
     hl.exec_cmd("gsettings set org.gnome.desktop.interface gtk-theme \"adw-gtk3\"")
     hl.exec_cmd("swaync")
+    hl.exec_cmd("swayosd-server")
 end)
