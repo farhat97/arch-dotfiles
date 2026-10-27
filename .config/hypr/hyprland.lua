@@ -31,23 +31,165 @@ hl.monitor({
     scale    = 1.25,
 })
 
--- Disable laptop display when lid is closed
-hl.bind("switch:on:Lid Switch", function()
+-- Clamshell: when docked + lid closed, disable eDP-1 and park all workspaces on the external
+local INTERNAL = "eDP-1"
+local EXTERNAL = "DP-6"
+local INTERNAL_MODE = "1920x1200@60"
+local INTERNAL_POS = "210x1080"
+local INTERNAL_SCALE = 1.25
+local lid_closed = false
+local applying_clamshell = false
+
+-- get_monitor returns nil for a successfully disabled output
+local function internal_is_active()
+    return hl.get_monitor(INTERNAL) ~= nil
+end
+
+local function get_external_name()
+    for _, mon in ipairs(hl.get_monitors()) do
+        if mon.name ~= INTERNAL then
+            return mon.name
+        end
+    end
+    return nil
+end
+
+local function is_docked()
+    return get_external_name() ~= nil
+end
+
+-- Prefer ACPI over the switch event (lid switches often bounce open/close).
+local function acpi_lid_closed()
+    local f = io.open("/proc/acpi/button/lid/LID/state", "r")
+    if not f then
+        return nil
+    end
+    local content = f:read("*a") or ""
+    f:close()
+    return content:find("closed", 1, true) ~= nil
+end
+
+local function migrate_workspaces(target)
+    if not target then
+        return
+    end
+    for _, ws in ipairs(hl.get_workspaces()) do
+        if not ws.special then
+            local mon = ws.monitor
+            if not mon or mon.name ~= target then
+                hl.dispatch(hl.dsp.workspace.move({ workspace = ws.id, monitor = target }))
+            end
+        end
+    end
+end
+
+-- IMPORTANT: after an enabled rule with mode/pos/scale (the static eDP-1 block
+-- above, or lid-open), `hl.monitor({ disabled = true })` alone can be a no-op.
+-- Always respecify the full rule with disabled = true.
+local function disable_internal()
     hl.monitor({
-        output = "eDP-1",
+        output   = INTERNAL,
+        mode     = INTERNAL_MODE,
+        position = INTERNAL_POS,
+        scale    = INTERNAL_SCALE,
         disabled = true,
     })
+end
+
+local function enable_internal()
+    hl.monitor({
+        output   = INTERNAL,
+        mode     = INTERNAL_MODE,
+        position = INTERNAL_POS,
+        scale    = INTERNAL_SCALE,
+        disabled = false,
+    })
+end
+
+-- Disable first (must succeed or Hyprland will keep a workspace on eDP-1).
+local function apply_clamshell(schedule_retries)
+    if applying_clamshell then
+        return
+    end
+    applying_clamshell = true
+
+    local external = get_external_name() or EXTERNAL
+    disable_internal()
+    migrate_workspaces(external)
+    hl.dispatch(hl.dsp.focus({ monitor = external }))
+
+    applying_clamshell = false
+
+    if schedule_retries then
+        for _, delay in ipairs({ 100, 400, 1000, 2000 }) do
+            hl.timer(function()
+                if not lid_closed then
+                    return
+                end
+                -- Bail if ACPI says the lid was opened
+                if acpi_lid_closed() == false then
+                    lid_closed = false
+                    return
+                end
+                if is_docked() and internal_is_active() then
+                    apply_clamshell(false)
+                else
+                    migrate_workspaces(get_external_name() or EXTERNAL)
+                end
+            end, { timeout = delay, type = "oneshot" })
+        end
+    end
+end
+
+hl.bind("switch:on:Lid Switch", function()
+    lid_closed = true
+    if is_docked() then
+        apply_clamshell(true)
+    else
+        hl.exec_cmd(os.getenv("HOME") .. "/.config/hypr/lid-close.sh")
+    end
 end, { locked = true })
 
--- Re-enable laptop display when lid is opened
 hl.bind("switch:off:Lid Switch", function()
-    hl.monitor({
-        output = "eDP-1",
-        disabled = false,
-        mode = "preferred",
-        position = "auto",
-    })
+    -- Debounce spurious "open" events while the lid is still physically closed
+    hl.timer(function()
+        if acpi_lid_closed() then
+            lid_closed = true
+            if is_docked() then
+                apply_clamshell(true)
+            end
+            return
+        end
+        lid_closed = false
+        enable_internal()
+    end, { timeout = 300, type = "oneshot" })
 end, { locked = true })
+
+hl.on("monitor.added", function()
+    if lid_closed and is_docked() and internal_is_active() then
+        apply_clamshell(false)
+    end
+end)
+
+hl.on("monitor.removed", function()
+    if lid_closed then
+        local target = get_external_name()
+        if target then
+            migrate_workspaces(target)
+        end
+    end
+end)
+
+-- Config reload resets lid_closed; re-sync from ACPI so a closed lid stays clamshell
+local function sync_clamshell_from_acpi()
+    if acpi_lid_closed() and is_docked() then
+        lid_closed = true
+        apply_clamshell(true)
+    end
+end
+
+hl.on("hyprland.start", sync_clamshell_from_acpi)
+hl.on("config.reloaded", sync_clamshell_from_acpi)
 
 
 --##################
@@ -77,7 +219,6 @@ local menu = "fuzzel"
 -- exec-once = $terminal
 
 -- exec-once = nm-applet &
-
 
 --############################
 
@@ -127,9 +268,9 @@ hl.env("HYPRCURSOR_SIZE", 24)
 
 hl.config({
     general = {
-        gaps_in = 2.5,
-        gaps_out = 3,
-        border_size = 2,
+        gaps_in = 2,
+        gaps_out = 2,
+        border_size = 1,
         -- https://wiki.hypr.land/Configuring/Variables/#variable-types for info about colors
         -- Set to true enable resizing windows by clicking and dragging on borders and gaps
         resize_on_border = false,
@@ -147,7 +288,7 @@ hl.config({
 
 hl.config({
     decoration = {
-        rounding = 10,
+        rounding = 8,
         rounding_power = 2,
         -- Change transparency of focused and unfocused windows
         active_opacity = 1.0,
@@ -269,7 +410,8 @@ hl.config({
 
 hl.config({
     input = {
-        kb_layout = "us",
+        kb_layout = "us, latam",
+        kb_options = "grp:alt_shift_toggle",
         follow_mouse = 1,
         sensitivity = 0,
         -- -1.0 - 1.0, 0 means no modification.
@@ -326,6 +468,8 @@ hl.bind(mainMod .. " + " .. "Q", hl.dsp.exec_cmd("kitty"))
 hl.bind(mainMod .. " + " .. "W", hl.dsp.window.close())
 
 hl.bind(mainMod .. " + " .. "M", hl.dsp.exit())
+
+hl.bind(mainMod .. " + " .. "N", hl.dsp.exec_cmd("swaync-client -t -sw"))
 
 hl.bind(mainMod .. " + " .. "E", hl.dsp.exec_cmd("dolphin"))
 
@@ -415,19 +559,21 @@ hl.bind(mainMod .. " + " .. "mouse:272", hl.dsp.window.drag(), { mouse = true })
 
 hl.bind(mainMod .. " + " .. "mouse:273", hl.dsp.window.resize(), { mouse = true })
 
--- Laptop multimedia keys for volume and LCD brightness
+-- Laptop multimedia keys for volume and LCD brightness.
+-- swayosd-client changes the level and draws the OSD. Shown on the focused monitor.
+local osd = 'swayosd-client --monitor "$(hyprctl monitors -j | jq -r \'.[] | select(.focused == true).name\')"'
 
-hl.bind("XF86AudioRaiseVolume", hl.dsp.exec_cmd("wpctl set-volume -l 1 @DEFAULT_AUDIO_SINK@ 5%+"), { locked = true })
+hl.bind("XF86AudioRaiseVolume", hl.dsp.exec_cmd(osd .. " --output-volume +5 --max-volume 100"), { locked = true })
 
-hl.bind("XF86AudioLowerVolume", hl.dsp.exec_cmd("wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-"), { locked = true })
+hl.bind("XF86AudioLowerVolume", hl.dsp.exec_cmd(osd .. " --output-volume -5 --max-volume 100"), { locked = true })
 
-hl.bind("XF86AudioMute", hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"), { locked = true })
+hl.bind("XF86AudioMute", hl.dsp.exec_cmd(osd .. " --output-volume mute-toggle"), { locked = true })
 
-hl.bind("XF86AudioMicMute", hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle"), { locked = true })
+hl.bind("XF86AudioMicMute", hl.dsp.exec_cmd(osd .. " --input-volume mute-toggle"), { locked = true })
 
-hl.bind("XF86MonBrightnessUp", hl.dsp.exec_cmd("brightnessctl -e4 -n2 set 5%+"), { locked = true })
+hl.bind("XF86MonBrightnessUp", hl.dsp.exec_cmd(osd .. " --brightness +5 --min-brightness 2 --device intel_backlight"), { locked = true })
 
-hl.bind("XF86MonBrightnessDown", hl.dsp.exec_cmd("brightnessctl -e4 -n2 set 5%-"), { locked = true })
+hl.bind("XF86MonBrightnessDown", hl.dsp.exec_cmd(osd .. " --brightness -5 --min-brightness 2 --device intel_backlight"), { locked = true })
 
 -- Requires playerctl
 
@@ -473,10 +619,18 @@ hl.window_rule({
     float = true,
     size = "1000 600"
 })
+hl.window_rule({
+    match = { class = "org.kde.dolphin" },
+    float = true,
+    size = "900 550"
+})
+
 
 -- Autostart
 hl.on("hyprland.start", function()
     hl.exec_cmd("waybar & hyprpaper")
     hl.exec_cmd("gsettings set org.gnome.desktop.interface color-scheme \"prefer-dark\"")
     hl.exec_cmd("gsettings set org.gnome.desktop.interface gtk-theme \"adw-gtk3\"")
+    hl.exec_cmd("swaync")
+    hl.exec_cmd("swayosd-server")
 end)

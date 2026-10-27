@@ -11,4 +11,9 @@
 - bluetoothctl
 - btop
 - flameshot
+- Papirus icon theme
+
+## Qt6 settings for Breeze Dark color scheme
+- Add the following line under /etc/environment : 
+`QT_QPA_PLATFORMTHEME=qt5ct`
 
