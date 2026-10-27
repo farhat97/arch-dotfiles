@@ -1,19 +1,19 @@
-@define-color cc-bg #07171c95;
-@define-color noti-border-color #dcd7ba;
-@define-color noti-bg #11111b;
-@define-color noti-bg-darker #081b21d1;
-@define-color noti-bg-hover #1b1b2b;
-@define-color noti-bg-focus #1b1b1b;
-@define-color noti-close-bg #dcd7ba;
-@define-color noti-close-bg-hover #dcd7ba;
-@define-color text-color #dcd7ba;
-@define-color text-color-disabled #828282;
-@define-color bg-selected #7e9cd8;
-@define-color border-blue #33ccff;
+@define-color cc-bg #091820;
+@define-color noti-border-color #b7ddd4;
+@define-color noti-bg #0d222b;
+@define-color noti-bg-darker #06141a;
+@define-color noti-bg-hover #13303a;
+@define-color noti-bg-focus #13303a;
+@define-color noti-close-bg #d4ebe4;
+@define-color noti-close-bg-hover #d4ebe4;
+@define-color text-color #d4ebe4;
+@define-color text-color-disabled #6d8783;
+@define-color bg-selected #3a9ea8;
+@define-color border-blue #249eb3;
 @define-color red-base #c34043;
 @define-color red-hover #e46876;
-@define-color green-base #98bb6c;
-@define-color blue-base #7e9cd8;
+@define-color title-accent #7ed9c8;
+@define-color blue-base #7ec8d6;
 
 * {
   font-family: "JetBrainsMono NFM SemiBold", monospace;
@@ -21,7 +21,7 @@
 }
 
 .test-class {
-  color: #07171c95;
+  color: #102935;
 }
 
 .control-center .notification-row:focus,
@@ -127,7 +127,7 @@
   font-size: 16px;
   font-weight: 700;
   background: transparent;
-  color: @green-base;
+  color: @title-accent;
   text-shadow: none;
 }
 
@@ -219,7 +219,7 @@
 }
 
 .widget-buttons-grid>flowbox>flowboxchild>button:checked {
-  background: @green-base;
+  background: @title-accent;
   color: @cc-bg;
 }
 
