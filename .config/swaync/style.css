@@ -63,6 +63,24 @@
   background: @cc-bg;
   border: 2px solid @border-blue;
   margin: 3px -2px 3px 0;
+  padding: 10px 12px;
+}
+
+.notification-group {
+  background: #041014;
+  border-radius: 12px;
+}
+
+.notification-group-headers,
+.notification-group-header {
+  color: @text-color;
+}
+
+.notification-group-collapse-button,
+.notification-group-close-all-button {
+  background: @noti-bg;
+  color: @text-color;
+  border-radius: 100%;
 }
 
 .close-button {
