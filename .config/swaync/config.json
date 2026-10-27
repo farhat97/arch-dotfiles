@@ -37,7 +37,7 @@
     },
     "mpris": {
       "blacklist": ["playerctl"],
-      "autohide": false,
+      "autohide": true,
       "show-album-art": "always",
       "loop-carousel": false
     },
