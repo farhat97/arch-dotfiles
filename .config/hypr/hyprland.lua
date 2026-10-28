@@ -546,6 +546,8 @@ hl.bind(mainMod .. " + " .. "SHIFT" .. " + " .. 0, hl.dsp.window.move({ workspac
 -- hl.bind(mainMod .. " + " .. "SHIFT" .. " + " .. "S", hl.dsp.window.move({ workspace = "special:magic" }))
 hl.bind(mainMod .. " + " .. "SHIFT" .. " + " .. "S", hl.dsp.exec_cmd("hyprshot -m region --clipboard-only"))
 
+hl.bind(mainMod .. " + " .. "SHIFT" .. " + " .. "CTRL" .. " + " .. "S", hl.dsp.exec_cmd("hyprshot -m region -o \"$HOME/Pictures/Screenshots\""))
+
 
 -- Scroll through existing workspaces with mainMod + scroll
 
